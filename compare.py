@@ -83,6 +83,7 @@ def getFailures(url, os ,job_name) :
 doc, tag, text = Doc().tagtext()
 user="pravin"
 password="pravin123456"
+developer = ['Alisha', 'Parita' ,'Pravin', 'Sonia', 'Sneha', 'Talat','Valencia', 'Yussuf' ]
 #devs = {'accumulo':'Sonia','ambari':'Valencia','atlas':'','falcon':'Sonia','flume':'','hadoop':'Parita','hbase':'Valencia','hive':'Alisha/Pravin','kafka':'Sonia','knox':'','metron':'','oozie':'Alisha','phoenix':'','pig':'','ranger':'','slider':'','spark':'Parita','sqoop':'','storm':'','tez':'Valencia','zeppelin':'Sneha','zookeeper':'Pravin'}
 devs = {'accumulo':'Sonia','ambari':'Valencia','atlas':'Yussuf','falcon':'Sonia','flume':'Pravin','hadooptmp':'Parita','hbase':'Valencia','hive':'Alisha/Pravin','kafka':'Sonia','knox':'Yussuf','metron':'Pravin','oozie':'Alisha','phoenix':'Valencia','pig':'Yussuf','ranger':'Sneha','slider':'Yussuf','spark':'Parita','sqoop':'Talat','storm':'Parita','tez':'Valencia','zeppelin':'Sneha','zookeeper':'Pravin'}
 jobs = []
@@ -105,7 +106,7 @@ for job in resp.json()['jobs'] :
 #jobs.append("zeppelin")
 
 def getBuild(resp, os, job_name):
-    print "called"
+    #print "called"
     all_builds = resp['builds']
     i = 0
     build_url = ""
@@ -117,7 +118,7 @@ def getBuild(resp, os, job_name):
                 environment = ['ppcub16', 'x86ub16', 'ppcrh7', 'x86rh7']
                 x = set([])
                 if os == 'ppcrh75' or job_name == 'hadooptmp':
-                    print "ppcrh7"
+                    #print "ppcrh7"
                     if os == 'ppcrh75':
                         builds_status_resp = requests.get(build['url'] + a_j + "", auth=(ppcrh75user, ppcrh75password))
                     else:
@@ -138,7 +139,7 @@ def getBuild(resp, os, job_name):
                         return build['url']
                 else: 
                     builds_status_resp = requests.get(build['url'] + a_j + "", auth=(user, password))
-                    print "entered here"
+                    #print "entered here"
                     if builds_status_resp.json()['result'] != 'ABORTED' and  builds_status_resp.json()['result'] != 'FAILURE' and builds_status_resp.json()['building'] == False  :
                         #print builds_status_resp.json()['result']
                         if build_url == "":
@@ -200,6 +201,9 @@ with tag('html'):
                         with tag('li', role="presentation"):
                             with tag('a', style="font-weight:bold", href='#', id='anchor_'+name, onclick="showme(this.id);"):
                                 text(key.upper())
+                    with tag('li', role="presentation"):
+                        with tag('a', style="font-weight:bold", href='#', id='anchor_developers', onclick="showme(this.id);"):
+                            text('DEVELOPERS')
                     with tag('p', role="presentation", align="right",style="color:grey;padding-top:10px" ):
                         utcdate = datetime.utcnow().strftime("%d-%m-%Y %H:%M UTC")
                         text("Report Date: {0}".format(utcdate))
@@ -225,7 +229,25 @@ with tag('html'):
                         j = str(job_display_name)
                         j = j.upper()
                         text(j)
-            
+                        
+        #Tab for developers list
+        with tag('div',style="display: table-cell"):
+            with tag('div', klass="panel panel-info" , id='developers', name='summary', style="display:block;font-weight:bold;display:none;"):
+                with tag('div', klass="panel-heading") :
+                    with tag('div', klass="panel-title") :
+                        text('DEVELOPERS')
+                with tag('div', klass='panel-body') :
+                    with tag('table',id="summarytable", klass="table table-striped",style="font-size:15"):
+                        for d in developer: 
+                            list1 = [key for key,val in devs.items() if d in val]
+                            with tag('tr'):
+                                with tag('td',style="width: 100px;font-weight:bold"):
+                                    text(d.upper())
+                                with tag('td'):
+                                    for s in list1:
+                                        with tag('button' ,type="button", klass="btn btn-link btn-xs", id='anchor_'+s.replace('TMP',''),  onclick="showme(this.id);"):
+                                            text(s.upper().replace('TMP','')+ " ")
+                                           
         with tag('div',style="display: table-cell"):
             for job in jobs :
                 ppcubuntu16summary = {}
@@ -246,7 +268,7 @@ with tag('html'):
                     if 'lastCompletedBuild' not in resp.keys() or not resp['lastCompletedBuild']:
                         continue  
                     buildUrl = getBuild(resp, "", job)
-                    print buildUrl
+                    #print buildUrl
                     x86_lastBuild=requests.get(buildUrl+a_j,auth=(user, password)).json()
                     original_build_url = buildUrl
                     if job == "hadooptmp":
@@ -263,7 +285,7 @@ with tag('html'):
                     x86rhel7summary['testErrorName'], x86rhel7summary['testErrorDesc'], x86rhel7summary['totalCount'], x86rhel7summary['failedCount'], x86rhel7summary['skippedCount'] = getFailures(buildUrl+'testReport'+a_j, 'x86rh7',job)
     
                     buildUrl = getBuild(ppcrh7resp, "ppcrh75", job)
-                    print buildUrl
+                    #print buildUrl
                     ppcrhel75summary['testErrorName'], ppcrhel75summary['testErrorDesc'], ppcrhel75summary['totalCount'], ppcrhel75summary['failedCount'], ppcrhel75summary['skippedCount'] = getFailures(buildUrl+'testReport'+a_j, 'ppcrh75',job)
                     #print ppcrhel75summary
                     ppcubuntu16summary['name'] = job_display_name
@@ -481,7 +503,7 @@ with tag('html'):
                                             text()
                                         if summary_detail['result'] != "SUCCESS" and summary_detail['result'] != "ABORTED" :
                                             if summary_detail['unique'] == 0:
-                                                print text(str(summary_detail['failedCount']))
+                                                text(str(summary_detail['failedCount']))
                                             else:
                                                 text(str(summary_detail['failedCount']) + " (" + str(summary_detail['unique']) + ")")
                                     
@@ -527,7 +549,7 @@ with tag('html'):
                                         text()
                                     if ppcubuntu16_detail['result'] != "SUCCESS" and ppcubuntu16_detail['result'] != "SUCCESS":
                                         if ppcubuntu16_detail['unique'] == 0:
-                                            print text(str(ppcubuntu16_detail['failedCount']))
+                                            text(str(ppcubuntu16_detail['failedCount']))
                                         else:
                                             text(str(ppcubuntu16_detail['failedCount']) + " (" + str(ppcubuntu16_detail['unique']) + ")")
                                 with tag('td'):
@@ -535,7 +557,7 @@ with tag('html'):
                                         text()
                                     if x86ubuntu16_detail['result'] != "SUCCESS" and x86ubuntu16_detail['result'] != "ABORTED":
                                         if x86ubuntu16_detail['unique'] == 0:
-                                            print text(str(x86ubuntu16_detail['failedCount']))
+                                            text(str(x86ubuntu16_detail['failedCount']))
                                         else:
                                             text(str(x86ubuntu16_detail['failedCount']) + " (" + str(x86ubuntu16_detail['unique']) + ")")
                                 with tag('td'):
@@ -543,7 +565,7 @@ with tag('html'):
                                         text()
                                     if ppcrhel7_detail['result'] != "SUCCESS" and ppcrhel7_detail['result'] != "ABORTED":
                                         if ppcrhel7_detail['unique'] == 0:
-                                            print text(str(ppcrhel7_detail['failedCount']))
+                                            text(str(ppcrhel7_detail['failedCount']))
                                         else:
                                             text(str(ppcrhel7_detail['failedCount']) + " (" + str(ppcrhel7_detail['unique']) + ")")
                                 with tag('td'):
@@ -551,7 +573,7 @@ with tag('html'):
                                         text()
                                     if x86rhel7_detail['result'] != "SUCCESS" and x86rhel7_detail['result'] != "ABORTED":
                                         if x86rhel7_detail['unique'] == 0:
-                                            print text(str(x86rhel7_detail['failedCount']))
+                                            text(str(x86rhel7_detail['failedCount']))
                                         else:
                                             text(str(x86rhel7_detail['failedCount']) + " (" + str(x86rhel7_detail['unique']) + ")")
                                 with tag('td'):
@@ -559,7 +581,7 @@ with tag('html'):
                                         text()
                                     if ppcrhel75_detail['result'] != "SUCCESS" and ppcrhel75_detail['result'] != "ABORTED":
                                         if ppcrhel75_detail['unique'] == 0:
-                                            print text(str(ppcrhel75_detail['failedCount']))
+                                            text(str(ppcrhel75_detail['failedCount']))
                                         else:
                                             text(str(ppcrhel75_detail['failedCount']) + " (" + str(ppcrhel75_detail['unique']) + ")")
                                 with tag('td'):
