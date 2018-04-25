@@ -31,7 +31,7 @@ def getFailures(url, os ,job_name) :
     testNames = []
     testErrs = []
     try:
-        if os == 'ppcrh75' or job_name == 'hadooptmp' :
+        if os == 'ppcrh75':
             if os == 'ppcrh75':
                 testresult = requests.get(url,auth=(ppcrh75user, ppcrh75password))
                 testresult = json.loads(testresult.text,strict=False)
@@ -85,7 +85,7 @@ user="pravin"
 password="pravin123456"
 developer = ['Alisha', 'Parita' ,'Pravin', 'Sonia', 'Sneha', 'Talat','Valencia', 'Yussuf' ]
 #devs = {'accumulo':'Sonia','ambari':'Valencia','atlas':'','falcon':'Sonia','flume':'','hadoop':'Parita','hbase':'Valencia','hive':'Alisha/Pravin','kafka':'Sonia','knox':'','metron':'','oozie':'Alisha','phoenix':'','pig':'','ranger':'','slider':'','spark':'Parita','sqoop':'','storm':'','tez':'Valencia','zeppelin':'Sneha','zookeeper':'Pravin'}
-devs = {'accumulo':'Sonia','ambari':'Valencia','atlas':'Yussuf','falcon':'Sonia','flume':'Pravin','hadooptmp':'Parita','hbase':'Valencia','hive':'Alisha/Pravin','kafka':'Sonia','knox':'Yussuf','metron':'Pravin','oozie':'Alisha','phoenix':'Valencia','pig':'Yussuf','ranger':'Sneha','slider':'Yussuf','spark':'Parita','sqoop':'Talat','storm':'Parita','tez':'Valencia','zeppelin':'Sneha','zookeeper':'Pravin'}
+devs = {'accumulo':'Sonia','ambari':'Valencia','atlas':'Yussuf','falcon':'Sonia','flume':'Pravin','hadoop':'Parita','hbase':'Valencia','hive':'Alisha/Pravin','kafka':'Sonia','knox':'Yussuf','metron':'Pravin','oozie':'Alisha','phoenix':'Valencia','pig':'Yussuf','ranger':'Sneha','slider':'Yussuf','spark':'Parita','sqoop':'Talat','storm':'Parita','tez':'Valencia','zeppelin':'Sneha','zookeeper':'Pravin'}
 jobs = []
 summary = {'ppcubuntu16' : [], 'ppcrhel7' : [],'x86ubuntu16' : [], 'x86rhel7' : [],'ppcrhel75' : [], }
 summary_name = ['ppc ubuntu16', 'x86 ubuntu16', 'ppc rhel7','x86 rhel7', 'ppc rhel75']
@@ -103,7 +103,7 @@ ppcrh75resp = requests.get(ppcrh75req,auth=(ppcrh75user, ppcrh75password))
 
 for job in resp.json()['jobs'] :
    jobs.append(job['name'])
-#jobs.append("zeppelin")
+#jobs.append("hadoop")
 
 def getBuild(resp, os, job_name):
     #print "called"
@@ -117,7 +117,7 @@ def getBuild(resp, os, job_name):
                 build_age = 0
                 environment = ['ppcub16', 'x86ub16', 'ppcrh7', 'x86rh7']
                 x = set([])
-                if os == 'ppcrh75' or job_name == 'hadooptmp':
+                if os == 'ppcrh75' :
                     #print "ppcrh7"
                     if os == 'ppcrh75':
                         builds_status_resp = requests.get(build['url'] + a_j + "", auth=(ppcrh75user, ppcrh75password))
@@ -223,7 +223,7 @@ with tag('html'):
                     text('Packages')
                 for job in jobs :
                     job_display_name = str(job).upper().replace('TMP','')
-                    if job == "hadoop" or job == "hadoop":
+                    if job == "hadooptmp" or job == "":
                        continue
                     with tag('a', href='#', id='anchor_'+job, klass="list-group-item list-group-item-action", onclick="showme(this.id);",title="Owned by "+devs.get(str(job))):
                         j = str(job_display_name)
@@ -256,7 +256,7 @@ with tag('html'):
                 ppcrhel7summary = {}
                 ppcrhel75summary = {}
                 x86rhel7summary['testErrorName'], ppcubuntu16summary['testErrorName'], x86ubuntu16summary['testErrorName'], x86rhel7_testErrs,  ppcubuntu16_testErrs, ppcrhel7_testErrs, x86ubuntu16_testErrs, ppcrhel7summary['testErrorName'], ppcrhel75summary['testErrorName'], ppcrhel75_testErrs= [], [], [], [], [], [], [], [], [], []
-                if job == "hadoop" or job == "":
+                if job == "hadooptmp" or job == "":
 				   continue
                 job_display_name = str(job).upper().replace('TMP','')
                 print "Procesing Job : " + job
