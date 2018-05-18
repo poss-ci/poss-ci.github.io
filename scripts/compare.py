@@ -213,7 +213,7 @@ def main():
                         
                         with tag('div', id=job, name='data', klass="panel panel-info" ,style="font-weight:bold;display:none;"):
                             with tag('div', klass="panel-heading",style="font-weight:bold;"):
-                                text(job_display_name.upper())
+                                text(str(job).upper())
                                 with tag('p', role="presentation", align="right",style="padding-left:5px;color:grey;display:inline;font-weight:normal"):
                                     text("(",devs.get(job),")")
                             with tag('div', klass='panel-body') :
@@ -347,6 +347,8 @@ def main():
                                     text('RHEL 7.5')
                                 elif "rhel" in keyname:
                                     text('RHEL 7.2')
+                                elif "18" in keyname:
+                                    text('UBUNTU 18.04')
                                 else:
                                     text('UBUNTU 16.04')
                                 
