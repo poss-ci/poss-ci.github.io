@@ -5,6 +5,15 @@ from yattag import Doc, indent
 from datetime import datetime
 import configparser
 
+
+environment = ['ppcub16', 'x86ub16','ppcub18', 'x86ub18', 'ppcrh7', 'x86rh7','ppcrh75','x86rh75']
+summary_name = ['ppc ubuntu16', 'x86 ubuntu16','ppc ubuntu18','x86 ubuntu18', 'ppc rhel7','x86 rhel7', 'ppc rhel75', 'x86 rhel75']
+
+
+developer = ['Alisha', 'Parita' ,'Pravin', 'Sonia', 'Sneha', 'Talat','Valencia', 'Yussuf' ]
+devs = {'accumulo':'Sonia','ambari':'Valencia','atlas':'Yussuf','falcon':'Sonia','flume':'Pravin','hadoop':'Parita','hbase':'Valencia','hive':'Alisha/Pravin','kafka':'Sonia','knox':'Yussuf','metron':'Pravin','oozie':'Alisha','phoenix':'Valencia','pig':'Yussuf','ranger':'Sneha','slider':'Yussuf','spark':'Parita','sqoop':'Talat','storm':'Parita','tez':'Valencia','zeppelin':'Sneha','zookeeper':'Pravin'}
+
+                
 def getBuild(resp):
     max_depth = 20
     a_j="/api/json"
@@ -16,7 +25,6 @@ def getBuild(resp):
             i += 1
             try:
                 build_age = 0
-                environment = ['ppcub16', 'x86ub16', 'ppcrh7', 'x86rh7','ppcrh75','x86rh75','ppcub18', 'x86ub18']
                 x = set([])
                 builds_status_resp = requests.get(build['url'] + a_j + "", auth=(user, password))
                 if builds_status_resp.json()['result'] != 'ABORTED' and  builds_status_resp.json()['result'] != 'FAILURE' and builds_status_resp.json()['building'] == False  :
@@ -102,11 +110,8 @@ def getFailures(url, os, job) :
 
 def main():
     doc, tag, text = Doc().tagtext()
-    developer = ['Alisha', 'Parita' ,'Pravin', 'Sonia', 'Sneha', 'Talat','Valencia', 'Yussuf' ]
-    devs = {'accumulo':'Sonia','ambari':'Valencia','atlas':'Yussuf','falcon':'Sonia','flume':'Pravin','hadoop':'Parita','hbase':'Valencia','hive':'Alisha/Pravin','kafka':'Sonia','knox':'Yussuf','metron':'Pravin','oozie':'Alisha','phoenix':'Valencia','pig':'Yussuf','ranger':'Sneha','slider':'Yussuf','spark':'Parita','sqoop':'Talat','storm':'Parita','tez':'Valencia','zeppelin':'Sneha','zookeeper':'Pravin'}
     jobs = []
-    summary = {'ppcubuntu16' : [], 'ppcrhel7' : [],'x86ubuntu16' : [], 'ppcubuntu18' : [], 'x86ubuntu18' : [], 'x86rhel7' : [],'ppcrhel75' : [], 'x86rhel75' : [] }
-    summary_name = ['ppc ubuntu16', 'x86 ubuntu16','ppc ubuntu18','x86 ubuntu18', 'ppc rhel7','x86 rhel7', 'ppc rhel75', 'x86 rhel75']
+    summary = {}
 
     job_url="/job/"
     a_j="/api/json"
@@ -116,7 +121,7 @@ def main():
     for job in resp.json()['jobs'] :
         if 'tmp' in job['name'].lower():
             continue
-        #if len(jobs) > 4 : break
+        #if len(jobs) > 2 : break
         jobs.append(job['name'])
 
     with tag('html'):
@@ -196,158 +201,148 @@ def main():
                     print "Procesing Job : " + job
                     xjob = server_url + job_url + job + a_j
                     resp = requests.get(xjob,auth=(user, password)).json()
-                    try:
-                        if 'lastCompletedBuild' not in resp.keys() or not resp['lastCompletedBuild']:
-                            continue  
-                        buildUrl = getBuild(resp)
-                        x86_lastBuild=requests.get(buildUrl+a_j,auth=(user, password)).json()
-                        environment = []
-                        environment.append(getFailures(buildUrl+'testReport'+a_j, 'ppcub16', job))
-                        environment.append(getFailures(buildUrl+'testReport'+a_j, 'x86ub16', job))
-                        environment.append(getFailures(buildUrl+'testReport'+a_j, 'ppcrh7', job))
-                        environment.append(getFailures(buildUrl+'testReport'+a_j, 'x86rh7', job))
-                        environment.append(getFailures(buildUrl+'testReport'+a_j, 'ppcrh75', job))
-                        environment.append(getFailures(buildUrl+'testReport'+a_j, 'x86rh75', job))       
-                        environment.append(getFailures(buildUrl+'testReport'+a_j, 'ppcub18', job))
-                        environment.append(getFailures(buildUrl+'testReport'+a_j, 'x86ub18', job))
-                        
-                        with tag('div', id=job, name='data', klass="panel panel-info" ,style="font-weight:bold;display:none;"):
-                            with tag('div', klass="panel-heading",style="font-weight:bold;"):
-                                text(str(job).upper())
-                                with tag('p', role="presentation", align="right",style="padding-left:5px;color:grey;display:inline;font-weight:normal"):
-                                    text("(",devs.get(job),")")
-                            with tag('div', klass='panel-body') :
-                                for action in x86_lastBuild['actions'] :
-                                    if action and action['_class'] == "hudson.plugins.git.util.BuildData" :
-                                        revHash = action['lastBuiltRevision']['branch'][0]['SHA1']
-                                        revName = action['lastBuiltRevision']['branch'][0]['name']
-                                        build_date  = datetime.fromtimestamp(round(x86_lastBuild['timestamp'] / 1000)).strftime("%d-%m-%Y %H:%M UTC")  
-                                        with tag('div', klass="bs-callout bs-callout-info"):
-                                            with tag('div') :
-                                                with tag('b'):
-                                                    text('Branch Details:')
-                                                text( ' {0}'.format(revName))
-                                                
-                                            with tag('div') :
-                                                with tag('b'):
-                                                    text('Last Revision: ')
-                                                text('{0}'.format(revHash))
-                                            with tag('div') :
-                                                with tag('b'):
-                                                    text('Last Run: ')
-                                                text('{0}'.format(build_date))
-                                        break
-                                with tag('table' ,width="100%" ,klass="table table-striped",style="font-size:13"):
-                                    with tag('thead'):
-                                        #header
-                                        with tag('tr'):
-                                            with tag('th', width="10%"):
-                                                text('')
-                                            for name in summary_name:
-                                                with tag('th'):
-                                                    text(name.upper())
-                                                                 
-                                        #summary
-                                    with tag('tbody'):
-                                        with tag('tr'):
+                    #try:
+                    if 'lastCompletedBuild' not in resp.keys() or not resp['lastCompletedBuild']:
+                        continue  
+                    buildUrl = getBuild(resp)
+                    x86_lastBuild=requests.get(buildUrl+a_j,auth=(user, password)).json()
+                    env_result = []
+                    for env in environment:
+                        env_result.append(getFailures(buildUrl+'testReport'+a_j, env, job))
+                    
+                    with tag('div', id=job, name='data', klass="panel panel-info" ,style="font-weight:bold;display:none;"):
+                        with tag('div', klass="panel-heading",style="font-weight:bold;"):
+                            text(str(job).upper())
+                            with tag('p', role="presentation", align="right",style="padding-left:5px;color:grey;display:inline;font-weight:normal"):
+                                text("(",devs.get(job),")")
+                        with tag('div', klass='panel-body') :
+                            for action in x86_lastBuild['actions'] :
+                                if action and action['_class'] == "hudson.plugins.git.util.BuildData" :
+                                    revHash = action['lastBuiltRevision']['branch'][0]['SHA1']
+                                    revName = action['lastBuiltRevision']['branch'][0]['name']
+                                    build_date  = datetime.fromtimestamp(round(x86_lastBuild['timestamp'] / 1000)).strftime("%d-%m-%Y %H:%M UTC")  
+                                    with tag('div', klass="bs-callout bs-callout-info"):
+                                        with tag('div') :
+                                            with tag('b'):
+                                                text('Branch Details:')
+                                            text( ' {0}'.format(revName))
+                                            
+                                        with tag('div') :
+                                            with tag('b'):
+                                                text('Last Revision: ')
+                                            text('{0}'.format(revHash))
+                                        with tag('div') :
+                                            with tag('b'):
+                                                text('Last Run: ')
+                                            text('{0}'.format(build_date))
+                                    break
+                            with tag('table' ,width="100%" ,klass="table table-striped",style="font-size:13"):
+                                with tag('thead'):
+                                    #header
+                                    with tag('tr'):
+                                        with tag('th', width="10%"):
+                                            text('')
+                                        for name in summary_name:
+                                            with tag('th'):
+                                                text(name.upper())
+                                                             
+                                    #summary
+                                with tag('tbody'):
+                                    with tag('tr'):
+                                        with tag('td'):
+                                            text('Summary')
+                                        for envDetail in env_result:
                                             with tag('td'):
-                                                text('Summary')
-                                            for envDetail in environment:
-                                                with tag('td'):
-                                                        with tag('div') :
-                                                                    text('Total Count : {0}'.format(envDetail['totalCount']))
-                                                        with tag('div') :
-                                                                    text('Failed Count : {0}'.format(envDetail['failedCount']))
-                                                        with tag('div') :
-                                                                    text('Skipped Count : {0}'.format(envDetail['skippedCount']))
-                           
-                                        #Status
-                                        with tag('tr'):
-                                            with tag('td'):
-                                                text('Result')
-                                            for envDetail in environment:
-                                                with tag('td'):
-                                                    with tag('img', src=getResultImage(envDetail['result']),align='top',style="width: 16px; height: 16px;"):
-                                                            text()
-                                                    text(envDetail['result'])
-                                        
-                                                
-                                        #Failures
-                                        with tag('tr'):
-                                            with tag('td'):
-                                                text('Failures')
-                                            for envDetail in environment:   
-                                                with tag('td') :
-                                                    with tag('ol',style="padding-left: 1.0em"):
-                                                        for t in envDetail['testErrorName'] :
-                                                            with tag('div'):
-                                                                with tag('li'):
-                                                                    text(t)
-                                                                                                    
-                                        #Description
-                                        with tag('tr'):
-                                            with tag('td'):
-                                                text('Description')
-                                            for envDetail in environment:                                        
-                                                with tag('td' ) :
-                                                    with tag('ol',style="padding-left: 1.0em"):
-                                                        for t in envDetail['testErrorDesc'] :
-                                                            with tag('div'):
-                                                                with tag('li'):
-                                                                    text(t)
-                                                                                                    
-
-                                        #Unique Failures
-                                        with tag('tr'):
-                                            with tag('td', style="word-wrap: break-word;min-width: 160px;max-width: 220px;"):
-                                                text('Unique Failures')
-                                            for i in range(0,len(environment),2):
-                                                with tag('td', style="word-wrap: break-word;min-width: 160px;max-width: 220px;"):
-                                                    result = [x for x in environment[i]['testErrorName'] if x not in environment[i+1]['testErrorName']]
-                                                    environment[i]['unique'] = len(result)
-                                                    with tag('ol',style="padding-left: 1.0em"):
-                                                        for t in result :
-                                                            with tag('li'):
-                                                                with tag('div'):
-                                                                    text(t)
-                                                with tag('td', style="word-wrap: break-word;min-width: 160px;max-width: 220px;"):
-                                                    result = [x for x in environment[i+1]['testErrorName'] if x not in environment[i]['testErrorName']] 
-                                                    environment[i+1]['unique'] = len(result)
-                                                    with tag('ol',style="padding-left: 1.0em"):
-                                                        for t in result :
-                                                            with tag('li'):
-                                                                with tag('div'):
-                                                                    text(t)
-                                                                                    
-                     
+                                                    with tag('div') :
+                                                                text('Total Count : {0}'.format(envDetail['totalCount']))
+                                                    with tag('div') :
+                                                                text('Failed Count : {0}'.format(envDetail['failedCount']))
+                                                    with tag('div') :
+                                                                text('Skipped Count : {0}'.format(envDetail['skippedCount']))
                        
-                        summary['ppcubuntu16'].append(environment[0])
-                        summary['x86ubuntu16'].append(environment[1])
-                        summary['ppcubuntu18'].append(environment[2])
-                        summary['x86ubuntu18'].append(environment[3])
-                        summary['ppcrhel7'].append(environment[4])
-                        summary['x86rhel7'].append(environment[5])
-                        summary['ppcrhel75'].append(environment[6])
-                        summary['x86rhel75'].append(environment[7])
-                    except Exception as e:
-                        print(e)
-                        print 'FAILED'
+                                    #Status
+                                    with tag('tr'):
+                                        with tag('td'):
+                                            text('Result')
+                                        for envDetail in env_result:
+                                            with tag('td'):
+                                                with tag('img', src=getResultImage(envDetail['result']),align='top',style="width: 16px; height: 16px;"):
+                                                        text()
+                                                text(envDetail['result'])
+                                    
+                                            
+                                    #Failures
+                                    with tag('tr'):
+                                        with tag('td'):
+                                            text('Failures')
+                                        for envDetail in env_result:   
+                                            with tag('td') :
+                                                with tag('ol',style="padding-left: 1.0em"):
+                                                    for t in envDetail['testErrorName'] :
+                                                        with tag('div'):
+                                                            with tag('li'):
+                                                                text(t)
+                                                                                                
+                                    #Description
+                                    with tag('tr'):
+                                        with tag('td'):
+                                            text('Description')
+                                        for envDetail in env_result:                                        
+                                            with tag('td' ) :
+                                                with tag('ol',style="padding-left: 1.0em"):
+                                                    for t in envDetail['testErrorDesc'] :
+                                                        with tag('div'):
+                                                            with tag('li'):
+                                                                text(t)
+                                                                                                
 
-                for key in summary:
-                    with tag('div',  klass="panel panel-info" , id=key, name='summary', style="font-weight:bold;font-size:12;display:none"):
+                                    #Unique Failures
+                                    with tag('tr'):
+                                        with tag('td', style="word-wrap: break-word;min-width: 160px;max-width: 220px;"):
+                                            text('Unique Failures')
+                                        for i in range(0,len(env_result),2):
+                                            with tag('td', style="word-wrap: break-word;min-width: 160px;max-width: 220px;"):
+                                                result = [x for x in env_result[i]['testErrorName'] if x not in env_result[i+1]['testErrorName']]
+                                                env_result[i]['unique'] = len(result)
+                                                with tag('ol',style="padding-left: 1.0em"):
+                                                    for t in result :
+                                                        with tag('li'):
+                                                            with tag('div'):
+                                                                text(t)
+                                            with tag('td', style="word-wrap: break-word;min-width: 160px;max-width: 220px;"):
+                                                result = [x for x in env_result[i+1]['testErrorName'] if x not in env_result[i]['testErrorName']] 
+                                                env_result[i+1]['unique'] = len(result)
+                                                with tag('ol',style="padding-left: 1.0em"):
+                                                    for t in result :
+                                                        with tag('li'):
+                                                            with tag('div'):
+                                                                text(t)
+                                                                                
+                    z=0
+                    for name in summary_name :
+                        if name not in summary:
+                            summary[name] = []
+                        summary[name].append(env_result[z])
+                        z += 1
+                    #except Exception as e:
+                    #    print(e)
+                    #    print 'FAILED'
+
+                for name in summary_name :
+                    summ_id = name.replace(" ", "")
+                    with tag('div',  klass="panel panel-info" , id=summ_id, name='summary', style="font-weight:bold;font-size:12;display:none"):
                         with tag('div', klass="panel-heading") :
                             with tag('div', klass="panel-title") :
-                                keyname = key[:3] + ' ' + key[3:]
-                                text(keyname.upper()+' SUMMARY')
+                                text(name.upper()+' SUMMARY')
                         with tag('div', klass="bs-callout bs-callout-info"):
                             with tag('div') :
                                 with tag('b'):
                                     text('OS: ')
-                                if "75" in keyname:
+                                if "75" in name:
                                     text('RHEL 7.5')
-                                elif "rhel" in keyname:
+                                elif "rhel" in name:
                                     text('RHEL 7.2')
-                                elif "18" in keyname:
+                                elif "18" in name:
                                     text('UBUNTU 18.04')
                                 else:
                                     text('UBUNTU 16.04')
@@ -365,7 +360,7 @@ def main():
                                         text('')
                                     with tag('th'):
                                         text('')
-                                for summary_detail in summary[key]:
+                                for summary_detail in summary[name]:
                                     with tag('tr'):
                                         with tag('td'):
                                             with tag('a', href='#', id='anchor_'+summary_detail['job'], onclick="showme(this.id);"):
@@ -392,26 +387,25 @@ def main():
                             with tag('tr'):
                                 with tag('th'):
                                     text()
-
                             with tag('tr'):
                                 with tag('th'):
                                     text('Package Name')
                                 for name in summary_name:
                                     with tag('th'):
                                         text(name.upper())
-
-                            for job_index in range(0, len(summary['ppcubuntu16'])):
+                            for job_index in range(0, len(summary[name])) :
                                 with tag('tr'):
                                     with tag('td'):
-                                        with tag('a', href='#', id='anchor_'+summary['ppcubuntu16'][job_index]['job'], onclick="showme(this.id);"):
-                                            text(summary['ppcubuntu16'][job_index]['name'])
+                                        with tag('a', href='#', id='anchor_'+summary[name][job_index]['job'], onclick="showme(this.id);"):
+                                            text(summary[name][job_index]['name'])
                                     
-                                    for key in summary :
-                                        detail = summary[key][job_index]
+                                    for name in summary_name :
+                                        detail = summary[name][job_index]
+                                        res = detail['result']
                                         with tag('td'):
-                                            with tag('img', title=detail['result'], src=getResultImage(detail['result']),align='top',style="width: 16px; height: 16px;"):
+                                            with tag('img', title=res, src=getResultImage(res),align='top',style="width: 16px; height: 16px;"):
                                                 text()
-                                            if detail['result'] != "SUCCESS" and detail['result'] != "SUCCESS":
+                                            if res != "SUCCESS":
                                                 if detail['unique'] == 0:
                                                     text(str(detail['failedCount']))
                                                 else:
@@ -422,7 +416,9 @@ def main():
       
     result = doc.getvalue()
     print "Writing result to a file at /var/www/html/ci_report.html"
-    with open('/var/www/html/ci_report.html11','w') as afile :
+    with open('/root/poss-ci.github.io/index.html','w') as afile :
+        afile.write(result.encode('utf-8'))
+    with open('/var/www/html/ci_report.html','w') as afile :
         afile.write(result.encode('utf-8'))
 
     print 'The script took {0}'.format(datetime.now() - startTime)
