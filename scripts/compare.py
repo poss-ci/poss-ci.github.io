@@ -7,11 +7,11 @@ import configparser
 
 
 environment = ['ppcub16', 'x86ub16','ppcub18', 'x86ub18', 'ppcrh7', 'x86rh7','ppcrh75','x86rh75']
-summary_name = ['ppc ubuntu16', 'x86 ubuntu16','ppc ubuntu18','x86 ubuntu18', 'ppc rhel7','x86 rhel7', 'ppc rhel75', 'x86 rhel75']
+summary_name = ['ppc ubuntu16', 'x86 ubuntu16','ppc ubuntu18','x86 ubuntu18', 'ppc rhel72','x86 rhel72', 'ppc rhel75', 'x86 rhel75']
 
 
-developer = ['Alisha', 'Parita' ,'Pravin', 'Sonia', 'Sneha', 'Talat','Valencia', 'Yussuf' ]
-devs = {'accumulo':'Sonia','ambari':'Valencia','atlas':'Yussuf','falcon':'Sonia','flume':'Pravin','hadoop':'Parita','hbase':'Valencia','hive':'Alisha/Pravin','kafka':'Sonia','knox':'Yussuf','metron':'Pravin','oozie':'Alisha','phoenix':'Valencia','pig':'Yussuf','ranger':'Sneha','slider':'Yussuf','spark':'Parita','sqoop':'Talat','storm':'Parita','tez':'Valencia','zeppelin':'Sneha','zookeeper':'Pravin'}
+developer = ['Alisha' ,'Pravin','Prajyot', 'Yussuf' ]
+devs = {'accumulo':'Prajyot','ambari':'Prajyot','atlas':'Yussuf','falcon':'Yussuf','flume':'Pravin','hadoop':'Pravin','hbase':'Prajyot','hive':'Alisha','kafka':'Prajyot','knox':'Yussuf','metron':'Pravin','oozie':'Alisha','phoenix':'Prajyot','pig':'Yussuf','ranger':'Yussuf','slider':'Yussuf','spark':'Prajyot','sqoop':'Yussuf','storm':'Alisha','tez':'Prajyot','zeppelin':'Alisha','zookeeper':'Pravin','calcite':'Pravin'}
 
                 
 def getBuild(resp):
@@ -121,7 +121,7 @@ def main():
     for job in resp.json()['jobs'] :
         if 'tmp' in job['name'].lower():
             continue
-        #if len(jobs) > 2 : break
+        #if len(jobs) > 1 : break
         jobs.append(job['name'])
 
     with tag('html'):
@@ -146,25 +146,25 @@ def main():
                         with tag('li', role="presentation"):
                             with tag('a', style="font-weight:bold", href='#', id='anchor_ppcx86', onclick="showme(this.id);"):
                                 text('FULL SUMMARY')
-                        for key in summary_name:
-                            name = key.replace(" ", "")
+                        for i in range(0,len(summary_name),2):
+                            key = summary_name[i].split()[1]
                             with tag('li', role="presentation"):
-                                with tag('a', style="font-weight:bold", href='#', id='anchor_'+name, onclick="showme(this.id);"):
+                                with tag('a', style="font-weight:bold", href='#', id='anchor_'+key, onclick="showme(this.id);"):
                                     text(key.upper())
                         with tag('li', role="presentation"):
                             with tag('a', style="font-weight:bold", href='#', id='anchor_developers', onclick="showme(this.id);"):
                                 text('DEVELOPERS')
+                        with tag('p',role="presentation",style="float:right;color:grey;font-size:13;padding-top:5px"):
+                            utcdate = datetime.utcnow().strftime("%d-%m-%Y %H:%M UTC")
+                            text(utcdate)
                     with tag('div',style="float:right;color:grey;font-size:12"):
-                        utcdate = datetime.utcnow().strftime("%d-%m-%Y %H:%M UTC")
-                        text("Report Date: {0}".format(utcdate))
-                with tag('div',style="float:right;color:grey;font-size:12"):
-                    text('Notations:')
-                    with tag('img',  src=getResultImage("FAILURE"),style="width: 16px; height: 16px;"):
-                        text("Build failed ")
-                    with tag('img',  src=getResultImage("SUCCESS"),style="width: 16px; height: 16px;"):
-                        text("Build success with no failure ")
-                    with tag('img',  src=getResultImage("UNSTABLE"),style="width: 16px; height: 16px;"):
-                        text("N (M) Build success with N test failures & M unique failures ")
+                        text('Notations:')
+                        with tag('img',  src=getResultImage("FAILURE"),style="width: 16px; height: 16px;"):
+                            text("Build failed ")
+                        with tag('img',  src=getResultImage("SUCCESS"),style="width: 16px; height: 16px;"):
+                            text("Build success with no failure ")
+                        with tag('img',  src=getResultImage("UNSTABLE"),style="width: 16px; height: 16px;"):
+                            text("N (M) Build success with N test failures & M unique failures ")
                             
             
             with tag('div', klass="col-sm-2 col-md-2 sidebar",style='table-cell'):
@@ -173,7 +173,7 @@ def main():
                         text('Packages')
                     for job in jobs :
                         job_display_name = str(job).upper()
-                        with tag('a', href='#', id='anchor_'+job, klass="list-group-item list-group-item-action", onclick="showme(this.id);",title="Owned by "+devs.get(str(job))):
+                        with tag('a', href='#', id='anchor_'+job, klass="list-group-item list-group-item-action", onclick="showme(this.id);",title="Owned by "+devs.get(str(job), "N/A")):
                             j = str(job_display_name)
                             j = j.upper()
                             text(j)
@@ -205,6 +205,8 @@ def main():
                     if 'lastCompletedBuild' not in resp.keys() or not resp['lastCompletedBuild']:
                         continue  
                     buildUrl = getBuild(resp)
+                    if buildUrl == "" :
+                        continue
                     x86_lastBuild=requests.get(buildUrl+a_j,auth=(user, password)).json()
                     env_result = []
                     for env in environment:
@@ -214,7 +216,7 @@ def main():
                         with tag('div', klass="panel-heading",style="font-weight:bold;"):
                             text(str(job).upper())
                             with tag('p', role="presentation", align="right",style="padding-left:5px;color:grey;display:inline;font-weight:normal"):
-                                text("(",devs.get(job),")")
+                                text("(",devs.get(job,"N/A"),")")
                         with tag('div', klass='panel-body') :
                             for action in x86_lastBuild['actions'] :
                                 if action and action['_class'] == "hudson.plugins.git.util.BuildData" :
@@ -264,11 +266,16 @@ def main():
                                     with tag('tr'):
                                         with tag('td'):
                                             text('Result')
+                                        i = 0
                                         for envDetail in env_result:
                                             with tag('td'):
-                                                with tag('img', src=getResultImage(envDetail['result']),align='top',style="width: 16px; height: 16px;"):
-                                                        text()
-                                                text(envDetail['result'])
+                                                if job == "ambari" and i == 0 or job == "ambari" and i == 2:
+                                                    text("N/A")
+                                                else: 
+                                                    with tag('img', src=getResultImage(envDetail['result']),align='top',style="width: 16px; height: 16px;"):
+                                                            text()
+                                                    text(envDetail['result'])
+                                            i += 1
                                     
                                             
                                     #Failures
@@ -328,26 +335,25 @@ def main():
                     #    print(e)
                     #    print 'FAILED'
 
-                for name in summary_name :
-                    summ_id = name.replace(" ", "")
-                    with tag('div',  klass="panel panel-info" , id=summ_id, name='summary', style="font-weight:bold;font-size:12;display:none"):
+                
+                for i in range(0,len(summary_name),2):
+                    osname = summary_name[i].split()[1]
+                    with tag('div',  klass="panel panel-info" , id=osname, name='summary', style="font-weight:bold;font-size:12;display:none"):
                         with tag('div', klass="panel-heading") :
                             with tag('div', klass="panel-title") :
-                                text(name.upper()+' SUMMARY')
+                                text(osname.upper()+' SUMMARY')
                         with tag('div', klass="bs-callout bs-callout-info"):
                             with tag('div') :
                                 with tag('b'):
                                     text('OS: ')
-                                if "75" in name:
+                                if "75" in osname:
                                     text('RHEL 7.5')
-                                elif "rhel" in name:
+                                elif "72" in osname:
                                     text('RHEL 7.2')
-                                elif "18" in name:
+                                elif "18" in osname:
                                     text('UBUNTU 18.04')
                                 else:
                                     text('UBUNTU 16.04')
-                                
-
                         with tag('table', klass='table table-striped' ,style="font-size:14"):
                             with tag('tbody'):
                                 #header
@@ -355,24 +361,32 @@ def main():
                                     with tag('th', ):
                                         text('Package Name')
                                     with tag('th'):
-                                        text('Result')
+                                        text('PPC')
+                                    with tag('th'):
+                                        text('X86')
                                     with tag('th'):
                                         text('')
-                                    with tag('th'):
-                                        text('')
-                                for summary_detail in summary[name]:
+                                for ppc_summary_detail,x86_summary_detail in zip(summary['ppc ' + osname],summary['x86 ' + osname]):
                                     with tag('tr'):
                                         with tag('td'):
-                                            with tag('a', href='#', id='anchor_'+summary_detail['job'], onclick="showme(this.id);"):
-                                                text(summary_detail['name'])
+                                                with tag('a', href='#', id='anchor_'+ppc_summary_detail['job'], onclick="showme(this.id);"):
+                                                    text(ppc_summary_detail['name'])
                                         with tag('td'):
-                                            with tag('img', src=getResultImage(summary_detail['result']),align='top',style="width: 16px; height: 16px;",title=summary_detail['result']):
+                                            with tag('img', src=getResultImage(ppc_summary_detail['result']),align='top',style="width: 16px; height: 16px;",title=ppc_summary_detail['result']):
                                                 text()
-                                            if summary_detail['result'] != "SUCCESS" and summary_detail['result'] != "ABORTED" :
-                                                if summary_detail['unique'] == 0:
-                                                    text(str(summary_detail['failedCount']))
+                                            if ppc_summary_detail['result'] != "SUCCESS" and ppc_summary_detail['result'] != "ABORTED" :
+                                                if ppc_summary_detail['unique'] == 0:
+                                                    text(str(ppc_summary_detail['failedCount']))
                                                 else:
-                                                    text(str(summary_detail['failedCount']) + " (" + str(summary_detail['unique']) + ")")
+                                                    text(str(ppc_summary_detail['failedCount']) + " (" + str(ppc_summary_detail['unique']) + ")")
+                                        with tag('td'):
+                                            with tag('img', src=getResultImage(x86_summary_detail['result']),align='top',style="width: 16px; height: 16px;",title=x86_summary_detail['result']):
+                                                text()
+                                            if x86_summary_detail['result'] != "SUCCESS" and x86_summary_detail['result'] != "ABORTED" :
+                                                if x86_summary_detail['unique'] == 0:
+                                                    text(str(x86_summary_detail['failedCount']))
+                                                else:
+                                                    text(str(x86_summary_detail['failedCount']) + " (" + str(x86_summary_detail['unique']) + ")")
                                         
                                         
                         
@@ -381,7 +395,7 @@ def main():
                     with tag('div', klass="panel-heading") :
                         with tag('div', klass="panel-title") :
                             text('FULL SUMMARY')
-                    with tag('table',id="summarytable", klass="table table-striped",style="font-size:15"):
+                    with tag('table',id="summarytable", klass="table table-striped",style="font-size:14"):
                         with tag('tbody'):
                             #header
                             with tag('tr'):
@@ -403,13 +417,16 @@ def main():
                                         detail = summary[name][job_index]
                                         res = detail['result']
                                         with tag('td'):
-                                            with tag('img', title=res, src=getResultImage(res),align='top',style="width: 16px; height: 16px;"):
-                                                text()
-                                            if res != "SUCCESS":
-                                                if detail['unique'] == 0:
-                                                    text(str(detail['failedCount']))
-                                                else:
-                                                    text(str(detail['failedCount']) + " (" + str(detail['unique']) + ")")
+                                            if summary[name][job_index]['name'] == "AMBARI" and name.startswith("ppc ubuntu"):
+                                                text("N/A")
+                                            else:
+                                                with tag('img', title=res, src=getResultImage(res),align='top',style="width: 16px; height: 16px;"):
+                                                    text()
+                                                if res != "SUCCESS":
+                                                    if detail['unique'] == 0:
+                                                        text(str(detail['failedCount']))
+                                                    else:
+                                                        text(str(detail['failedCount']) + " (" + str(detail['unique']) + ")")
                                     
 
 
